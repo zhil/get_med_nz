@@ -28,14 +28,15 @@ $ command
 
 ## Support
 
-For support issues relating to the installation, use and future development of this application, raise an Issue using your Github account.
+For support issues relating to the installation and use this application, please raise an Issue first.
 
 ## Roadmap
 
-To be advised.
+* Complete the Daml app by Sunday October 24th, 2021
+* To be advised
 
 ## Contributing
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+Pull requests are welcome. For major changes or functionality suggestions, please open an Issue first to discuss what you would like to change and if it aligns with the yet-to-be-published Roadmap, I will welcome the help.
 
 ## TODO
 * View the README.md on Narrow & Widescreen Desktop VDU
@@ -45,10 +46,18 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 
 ## Authors and acknowledgment
 
-Any contributions will result in a mention in this section. If you do not wanted to be mentioned, please advise, as I am more than willing to accept people's need for Privacy
+Any contributions will result in a mention in this section, in a simple Table format.
+
+| First Header  | Second Header |
+| ------------- | ------------- |
+| Content Cell  | Content Cell  |
+| Content Cell  | Content Cell  |
+| Content Cell  | Content Cell  |
+
+If you do not wanted to be mentioned, for whatever reason, please advise.
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
 
 ### Note
-All details are subject to change and should not be consider permanent or ready for Production until so advised via this README.md
+All details are subject to change and should not be consider permanent or ready for Production.
