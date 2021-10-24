@@ -1,1 +1,2 @@
 Blank file to test SSH-Key
+Placeholder for GetMedNZ user document
