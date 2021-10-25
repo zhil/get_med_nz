@@ -1,63 +1,113 @@
-# Get Med NZ
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/digital-asset/daml/blob/main/LICENSE)
 
-Get Med NZ is a [Daml](https://daml.com/) application for a cohesive, personal medications system.
+# getmednz
 
-## Installation
+See [documentation] for details.
 
-```
-# Clone the Github repository
-$ git clone https://github.com/quid-agis/get_med_nz
-$ cd get_med_nz
+[documentation]: https://docs.daml.com/getting-started/installation.html
 
-# Build the Daml application
-$ daml build
-```
+Please ask for help on [the Daml forum] if you encounter any issue!
 
-## Usage
+[the Daml forum]: https://discuss.daml.com
 
-```
-# Comment
-$ command
+## Development Quick Start
 
-# Comment
-$ command
+You need to have [Node.js] and [Daml] installed.
 
-# Comment
-$ command
+[Node.js]: https://nodejs.dev
+[Daml]: https://docs.daml.com
+
+First, start the Daml components:
+
+```bash
+daml start
 ```
 
-## Support
+This will:
 
-For support issues relating to the installation and use this application, please raise an Issue first.
+- Build you Daml code once.
+- Generate JavaScript code (and TypeScript definitions) for your Daml types.
+- Start a Daml sandbox gRPC server (on 6865).
+- Start a Daml HTTP JSON API server (on 7575).
+- Watch for the `r` key press (`r` + Enter on Windows); when pressed, rebuild
+  all of the Daml code, push the new DAR to the ledger, and rerun the JS/TS
+  code generation.
 
-## Roadmap
+Next, start the JS dev server:
 
-* Complete the Daml app by Sunday October 24th, 2021
-* To be advised
+```bash
+cd ui
+npm install
+npm start
+```
 
-## Contributing
-Pull requests are welcome. For major changes or functionality suggestions, please open an Issue first to discuss what you would like to change and if it aligns with the yet-to-be-published Roadmap, I will welcome the help.
+This starts a server on `http://localhost:3000` which:
 
-## TODO
-* View the README.md on Narrow & Widescreen Desktop VDU
-* View the README.md on Mobile devices
-* Research more professional README.md guidelines
-* Build development Skeleton of Daml app this week
+- Builds all of your TypeScript (or JavaScript) code (including type
+  definitions from the codegen).
+- Serves the result on :3000, redirecting `/v1` to the JSON API server (on
+  `localhost:7575`) so API calls are on the same origin as far as your browser
+  is concerned.
+- Watch for changes in TS/JS code (including codegen), and immediately rebuild.
 
-## Authors and acknowledgment
+## Deploying to Daml Hub
 
-Any contributions will result in a mention in this section, in a simple Table format.
+To build everything from scratch:
 
-| First Header  | Second Header |
-| ------------- | ------------- |
-| Content Cell  | Content Cell  |
-| Content Cell  | Content Cell  |
-| Content Cell  | Content Cell  |
+```bash
+daml build
+daml codegen js .daml/dist/getmednz-0.1.0.dar -o ui/daml.js
+cd ui
+npm install
+npm run-script build
+zip -r ../getmednz-ui.zip build
+```
 
-If you do not wanted to be mentioned, for whatever reason, please advise.
+Next you need to create a ledger on [Daml Hub], upload the files
+`.daml/dist/getmednz-0.1.0.dar` (created by the `daml build` command)
+and `getmednz-ui.zip` (created by the `zip` command based on the result
+of `npm run-script build`).
 
-## License
-[MIT](https://choosealicense.com/licenses/mit/)
+[Daml Hub]: https://hub.daml.com
 
-### Note
-All details are subject to change and should not be consider permanent or ready for Production.
+Once both files are uploaded, you need to tell Daml Hub to deploy them. A few
+seconds later, your website should be up and running.
+
+## Auth0 Authentication
+
+This template comes with out-of-the-box support for Auth0 authentication. You
+can still test your app locally with no authentication, using the default
+configuration. You can run just the UI server locally, against a deployed,
+authenticated JSON API server running on a remote host, by starting the
+development server with:
+
+```bash
+REACT_APP_AUTH=auth0 \
+REACT_APP_AUTH0_DOMAIN=$YOUR_AUTH0_DOMAIN \
+REACT_APP_AUTH0_CLIENT_ID=$YOUR_AUTH0_CLIENT_ID \
+REACT_APP_HTTP_JSON=$JSON_API_ADDRESS \
+npm start
+```
+
+where:
+
+- `REACT_APP_AUTH` explicitly activates the Auth0 login screen.
+- `REACT_APP_AUTH0_DOMAIN` is the domain corresponding to your Auth0 tenant.
+  You can find it as the `Domain` field on the Settings tab of your Auth0
+  application.
+- `REACT_APP_AUTH0_CLIENT_ID` is the Client ID of your Auth0 "single page
+  applications" application.
+- `REACT_APP_HTTP_JSON` is the base URL of the JSON API, including scheme
+  (always) and port (if different from default: 80 for http and 443 for https).
+
+For this setup to work, you need a properly setup Auth0 tenant where
+`localhost:3000` is listed as a valid callback URL in the application settings.
+
+To build your application with Auth0 enabled, run:
+
+```bash
+REACT_APP_AUTH=auth0 \
+REACT_APP_AUTH0_DOMAIN=$YOUR_AUTH0_DOMAIN \
+REACT_APP_AUTH0_CLIENT_ID=$YOUR_AUTH0_CLIENT_ID \
+npm start
+```

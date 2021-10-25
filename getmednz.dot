@@ -1,0 +1,135 @@
+digraph G {
+compound=true;
+rankdir=LR;
+subgraph cluster_AdverseReaction{
+n0[label=Create][color=green]; 
+n1[label=Archive][color=red]; 
+n2[label=AdverseReaction_Cancel][color=red]; 
+label=<<table align = "left" border="0" cellborder="0" cellspacing="1">
+<tr><td align="center"><b>AdverseReaction</b></td></tr><tr><td align="left">messageSenderAdverse</td></tr> 
+<tr><td align="left">multipleObserversAdverse</td></tr> 
+<tr><td align="left">messageContentAdverse.shortMessageChoice</td></tr> 
+<tr><td align="left">messageContentAdverse.shortMessageSenderName</td></tr> 
+<tr><td align="left">messageContentAdverse.shortMessageSenderContact</td></tr> 
+<tr><td align="left">messageContentAdverse.shortMessageNotes</td></tr> 
+</table>>;color=blue
+}subgraph cluster_ConfirmedVisit{
+n3[label=Create][color=green]; 
+n4[label=ConfirmedVisit_Cancel][color=red]; 
+n5[label=Archive][color=red]; 
+n6[label=ConfirmedVisit_Reject][color=red]; 
+n7[label=ConfirmedVisit_Accept][color=red]; 
+label=<<table align = "left" border="0" cellborder="0" cellspacing="1">
+<tr><td align="center"><b>ConfirmedVisit</b></td></tr><tr><td align="left">messageSenderConfirm</td></tr> 
+<tr><td align="left">multipleObserversConfirm</td></tr> 
+<tr><td align="left">messageContentConfirm</td></tr> 
+</table>>;color=blue
+}subgraph cluster_RequestVisit{
+n8[label=Create][color=green]; 
+n9[label=RequestVisit_Deny][color=red]; 
+n10[label=Archive][color=red]; 
+n11[label=RequestVisit_Accept][color=red]; 
+n12[label=RequestVisit_Submit][color=red]; 
+label=<<table align = "left" border="0" cellborder="0" cellspacing="1">
+<tr><td align="center"><b>RequestVisit</b></td></tr><tr><td align="left">messageSenderRequest</td></tr> 
+<tr><td align="left">multipleObserversRequest</td></tr> 
+<tr><td align="left">messageContentRequest.requestPatientName</td></tr> 
+<tr><td align="left">messageContentRequest.requestPatientDob</td></tr> 
+<tr><td align="left">messageContentRequest.requestPatientMessage</td></tr> 
+<tr><td align="left">messageContentRequest.requestPatientAssistance</td></tr> 
+<tr><td align="left">messageContentRequest.requestAssistanceType</td></tr> 
+<tr><td align="left">messageContentRequest.requestPatientChaperone</td></tr> 
+<tr><td align="left">messageContentRequest.requestPatientDate</td></tr> 
+<tr><td align="left">messageContentRequest.requestPatientContactNumber</td></tr> 
+<tr><td align="left">messageContentRequest.requestMessageDate</td></tr> 
+</table>>;color=blue
+}subgraph cluster_ContactMedicalCentre{
+n13[label=Create][color=green]; 
+n14[label=Archive][color=red]; 
+n15[label=RequestVisit][color=red]; 
+label=<<table align = "left" border="0" cellborder="0" cellspacing="1">
+<tr><td align="center"><b>ContactMedicalCentre</b></td></tr><tr><td align="left">contactPatient</td></tr> 
+<tr><td align="left">contactMedcen</td></tr> 
+<tr><td align="left">contactDoctor</td></tr> 
+<tr><td align="left">message</td></tr> 
+</table>>;color=blue
+}subgraph cluster_CommenceConsult{
+n16[label=Create][color=green]; 
+n17[label=CommenceConsult_Start][color=red]; 
+n18[label=CommenceConsult_Cancel][color=red]; 
+n19[label=CommenceConsult_Terminate][color=red]; 
+n20[label=ContinueConsult_Cease][color=red]; 
+n21[label=ContinueConsult_Action][color=red]; 
+n22[label=Archive][color=red]; 
+label=<<table align = "left" border="0" cellborder="0" cellspacing="1">
+<tr><td align="center"><b>CommenceConsult</b></td></tr><tr><td align="left">commenceMedcen</td></tr> 
+<tr><td align="left">commenceDoctor</td></tr> 
+<tr><td align="left">commencePatient</td></tr> 
+<tr><td align="left">commenceDetails</td></tr> 
+</table>>;color=blue
+}subgraph cluster_CompleteConsult{
+n23[label=Create][color=green]; 
+n24[label=ArchiveConsult][color=red]; 
+n25[label=Archive][color=red]; 
+label=<<table align = "left" border="0" cellborder="0" cellspacing="1">
+<tr><td align="center"><b>CompleteConsult</b></td></tr><tr><td align="left">completeMedcen</td></tr> 
+<tr><td align="left">completeDoctor</td></tr> 
+<tr><td align="left">completePatient</td></tr> 
+</table>>;color=blue
+}subgraph cluster_ContinueConsult{
+n26[label=Create][color=green]; 
+n27[label=ContinueConsult_Stop][color=red]; 
+n28[label=ContinueConsult_Start][color=red]; 
+n29[label=ContinueConsult_Cancel][color=red]; 
+n30[label=ContinueConsult_Terminate][color=red]; 
+n31[label=CompleteConsult_Cancel][color=red]; 
+n32[label=CompleteConsult_Action][color=red]; 
+n33[label=Archive][color=red]; 
+label=<<table align = "left" border="0" cellborder="0" cellspacing="1">
+<tr><td align="center"><b>ContinueConsult</b></td></tr><tr><td align="left">continueMedcen</td></tr> 
+<tr><td align="left">continueDoctor</td></tr> 
+<tr><td align="left">continuePatient</td></tr> 
+</table>>;color=blue
+}subgraph cluster_PrescriptAuth{
+n34[label=Create][color=green]; 
+n35[label=TransferMedications_Action][color=red]; 
+n36[label=Archive][color=red]; 
+n37[label=TransferMedications_Cancel][color=red]; 
+label=<<table align = "left" border="0" cellborder="0" cellspacing="1">
+<tr><td align="center"><b>PrescriptAuth</b></td></tr><tr><td align="left">senderPrescriptAuth</td></tr> 
+<tr><td align="left">ownerPrescriptAuth</td></tr> 
+<tr><td align="left">patientSummary.consultingRooms</td></tr> 
+<tr><td align="left">patientSummary.patientName</td></tr> 
+<tr><td align="left">patientSummary.patientDob</td></tr> 
+<tr><td align="left">patientSummary.patientNew</td></tr> 
+<tr><td align="left">patientSummary.patientCode</td></tr> 
+<tr><td align="left">patientSummary.patientGender</td></tr> 
+<tr><td align="left">patientSummary.patientType</td></tr> 
+<tr><td align="left">patientSummary.dateOfConsult</td></tr> 
+<tr><td align="left">patientSummary.consultNotes</td></tr> 
+<tr><td align="left">patientMedications.prescriptionChoice</td></tr> 
+<tr><td align="left">patientMedications.prescriptionNotes</td></tr> 
+</table>>;color=blue
+}subgraph cluster_QuidAgis{
+n38[label=Create][color=green]; 
+n39[label=Archive][color=red]; 
+n40[label=Review][color=green]; 
+label=<<table align = "left" border="0" cellborder="0" cellspacing="1">
+<tr><td align="center"><b>QuidAgis</b></td></tr><tr><td align="left">developer</td></tr> 
+<tr><td align="left">reviewers</td></tr> 
+<tr><td align="left">message</td></tr> 
+</table>>;color=blue
+}n7->n3
+n12->n8
+n15->n13
+n17->n16
+n21->n26
+n24->n23
+n24->n25
+n28->n26
+n32->n23
+n35->n34
+n40->n38
+n40->n39
+
+}

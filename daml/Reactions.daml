@@ -1,0 +1,86 @@
+-- Copyright (c) 2020 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+
+module Reactions where
+
+-- import Daml.Script()
+-- import DA.Time()
+-- import DA.Date (Month(Apr), date)
+
+{--
+  | Adverse Reactions section.
+  |
+  | 4 parts:
+  |
+  | LongMessageReaction;
+  | MessageChoiceReaction;
+  | ShortMessageReaction;
+  | AdverseReaction;
+--}
+
+-- LongMessageReaction Data Record Type
+--
+data LongMessageReaction = LongMessageReaction
+  with
+    messageSender : Text                                  -- First Last, if NOT Patient
+    patientName  : Text                                   -- First Name, Nil
+    patientGender : Text                                  -- Male, Female, Other
+    medicationName : Text                                 -- Trade name, Nil
+    medicationIssue : Date                                -- Date of Issue
+    outlineReaction : Text                                -- Message body
+    aedRequired : Bool                                    -- Was Emergency care require, True/False
+    contactNumber : Text                                  -- Contact details
+    dateOfMessage : Date                                  -- Date of contact
+  deriving (Eq, Show)  
+
+-- MessageChoiceReaction Data Record Type
+--
+data MessageChoiceReaction = MessageChoiceReaction
+  with
+    bodyofMessage : LongMessageReaction                   -- Activated after selecting [SOME]
+    contactNumber : Text                                  -- Phone number, Area code
+    replyRequired : Bool                                  -- Contact the Sender, True/False
+    dateOfMessage : Date                                  -- Date of message
+  deriving (Eq, Show)
+
+-- ShortMessageReaction Data Record Type
+--
+data ShortMessageReaction = ShortMessageReaction
+  with
+    shortMessageChoice : Optional MessageChoiceReaction   -- As above
+    shortMessageSenderName : Text                         -- Simple message for Choice=0
+    shortMessageSenderContact : Text                      -- Simple message for Choice=0
+    shortMessageNotes : Text                              -- Nil, or Text
+  deriving (Eq, Show)
+
+-- AdverseReaction Template
+--
+type AdverseReactionId = ContractId AdverseReaction
+template AdverseReaction
+  with
+    messageSenderAdverse : [Party]                        -- Patient + Others
+    multipleObserversAdverse : [Party]                    -- ADHB/MedSafeNZ/NZPhvC
+    messageContentAdverse : ShortMessageReaction          -- Form entries
+  where
+    agreement
+      "This Adverse reaction report is to advise the relevant operational "
+      <> "and statute authorities of any reaction deemed noteworthy by a "
+      <> "patient who has been legally prescribed medication in New Zealand."
+    signatory messageSenderAdverse
+    observer multipleObserversAdverse
+    
+    controller messageSenderAdverse can
+      -- Issue below, if active, causes failure. U/K cause. 
+      -- Enquiries pending.
+      {--
+      AdverseReaction_Submit : AdverseReactionId
+        do
+          create AdverseReaction with -- comment out, test
+            messageSenderAdverse,
+              multipleObserversAdverse,
+              messageContentAdverse
+      --}        
+
+      AdverseReaction_Cancel : () do return ()
+
+-- EOF

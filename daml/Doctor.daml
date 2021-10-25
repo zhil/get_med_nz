@@ -1,0 +1,398 @@
+-- Copyright (c) 2020 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+
+module Doctor where
+
+-- import Daml.Script
+-- import DA.Time()
+-- import DA.Date (Month(Apr), date)
+
+{--
+  | Consulation section.
+  |
+  | 4 parts:
+  |
+  | DetailsCommenceConsult;
+  | CommenceConsultId;
+  | ContinueConsult;
+  | CompleteConsult;
+--}
+
+{--
+  | New naming format, instead of ConsultComplete and then
+  | using ccmMedcen & ccmDoctor, use CompleteConsult, then
+  | use completeMedcen & completeDoctor. This alludes to the
+  | 'naming & module' thread started by Luciano J. on the forum.
+  |
+  | https://discuss.daml.com/t/managing-namespaces-in-daml/1984
+--}
+
+-- DetailsCommenceConsult Data Record Type
+--
+data DetailsCommenceConsult = DetailsCommenceConsult
+  with
+    consultRooms : Bool
+    covidRelated : Bool
+    consultName : Party
+    consultType : Int
+    consultDate : Date
+    consultNotes : Text
+    consultSpecialAccess : Bool
+    consultAccessDetails : Text
+  deriving (Eq, Show)
+
+-- CommenceConsult Template
+--
+type CommenceConsultId = ContractId CommenceConsult
+template CommenceConsult
+  with
+    commenceMedcen : Party                            -- Medcentre OBS
+    commenceDoctor : Party                            -- Doctor SIG
+    commencePatient : Party                           -- Patient SIG?
+    commenceDetails : Text                            -- As Test
+  where
+    agreement
+      "This is the commencement of a consultation by a Treating Doctor while the Medical"
+      <> "Centre is operating under the Ministry of Health NZ guidelines for Primary"
+      <> "Health Care while COVID-19 restrictions apply. For the full disclosure of Patient"
+      <> "obligations please visit https://www.nhcmedcentre.co.nz."
+      <> "Your continued use of this service is tacit acceptance of these guidelines."
+    signatory commenceMedcen, commenceDoctor, commencePatient
+
+    controller commenceDoctor can
+      
+      CommenceConsult_Start : ContractId CommenceConsult -- Doctor; start
+        do
+          create CommenceConsult
+            with
+              commenceDoctor,
+                commenceMedcen,
+                commencePatient,
+                commenceDetails
+    
+      CommenceConsult_Cancel : () do return () -- Doctor; cancel
+    
+    controller commencePatient can
+      CommenceConsult_Terminate : () do return () -- Patient; terminate
+
+    controller commenceMedcen can
+
+      ContinueConsult_Cease : () do return () -- Doctor; cease
+      
+      ContinueConsult_Action : ContractId ContinueConsult -- Doctor; action
+        do
+          create ContinueConsult
+            with
+              continueDoctor = commenceMedcen,
+                continueMedcen = commenceMedcen,
+                continuePatient = commencePatient
+
+-- ContinueConsult Template
+--
+type ContinueConsultId = ContractId ContinueConsult
+template ContinueConsult
+  with
+    continueMedcen : Party                           -- Medcentre OBS
+    continueDoctor : Party                           -- Doctor SIG
+    continuePatient : Party                          -- Patient SIG
+  where
+    agreement
+      "This is the consultation by a Treating Doctor while the Medical Centre is"
+      <> "operating under the Ministry of Health NZ guidelines for Primary Health"
+      <> "Care while COVID-19 restrictions apply. For the full disclosure of Patient"
+      <> "obligations please visit https://www.nhcmedcentre.co.nz."
+      <> "Your continued use of this service is tacit acceptance of these guidelines."
+    signatory continueMedcen, continueDoctor, continuePatient
+    
+    controller continueMedcen can
+      ContinueConsult_Stop : () do return () -- Medcen; stop
+
+    controller continueDoctor can 
+      ContinueConsult_Start : ContractId ContinueConsult -- Doctor; start
+        do
+          create ContinueConsult
+            with
+              continueDoctor,
+                continueMedcen,
+                continuePatient
+                    
+      ContinueConsult_Cancel : () do return () -- Doctor; cancel
+
+    controller continuePatient can
+      ContinueConsult_Terminate : () do return () -- Patient; terminate
+
+    controller continueMedcen can
+      CompleteConsult_Cancel : () do return () -- Doctor; cancel
+
+      CompleteConsult_Action : ContractId CompleteConsult -- Doctor; action
+        do
+          create CompleteConsult
+            with
+              completeDoctor = continueDoctor,
+                completeMedcen = continueMedcen,
+                completePatient = continuePatient
+
+-- CompleteConsult Template
+--
+type CompleteConsultId = ContractId CompleteConsult
+template CompleteConsult
+  with
+    completeMedcen : Party                           -- Medcentre
+    completeDoctor : Party                           -- Doctor
+    completePatient : Party                          -- Patient
+  where
+    agreement
+      "This is the completion of a consultation by a Treating Doctor while the Medical Centre"
+      <> "is operating under the Ministry of Health NZ guidelines for Primary Health"
+      <> "Care while COVID-19 restrictions apply. For the full disclosure of Patient"
+      <> "obligations please visit https://www.nhcmedcentre.co.nz."
+      <> "Your continued use of this service is tacit acceptance of these guidelines."
+    signatory completeMedcen, completeDoctor, completePatient
+
+    controller completeMedcen can
+      ArchiveConsult : CompleteConsultId -- Medcen; archive
+        with
+          closingParty : Party
+          closingNotes : Text
+          closingDate : Date
+            do
+              -- Treating Doctor cannot close consult
+              assertMsg "Treating Doctor cannnot close consult" (completeDoctor /= closingParty)
+              archive self
+              create this
+
+{--
+  | PrescriptAuth section.
+  |
+  | 5 parts:
+  |
+  | LongMessageMedication;
+  | MessageChoicePrescript;
+  | ShortMessageList;
+  | PatientSummary;
+  | PrescriptAuthId;
+--}
+
+-- PatientSummary Data Record Type
+--
+data PatientSummary = PatientSummary        -- Extract Medical CMS
+  with
+    consultingRooms : Bool                  -- Main Street Rooms
+    patientName : Text                      -- First Last  
+    patientDob : Text                       -- Date of Birth
+    patientNew : Bool                       -- New registration
+    patientCode : Int                       -- Next sequential number
+    patientGender : Text                    -- Male, Female, Other
+    patientType : Int                       -- NZ_Citizen, NZ_Resident, Other
+    dateOfConsult : Date                    -- Date of consultation
+    consultNotes : Text                     -- Additional details, concise
+  deriving (Eq, Show)
+
+-- LongMessageMedication Data Record Type
+--
+data LongMessageMedication = LongMessageMedication                -- Medication type/quantity
+  with
+    tabletName : Text                       -- Orangazepam
+    tabletQuantity : Int                    -- 90 (3 per Day, 30 Days)
+    tableRepeat : Bool                      -- True/False
+  deriving (Eq, Show)
+
+-- MessageChoicePrescript Data Record Type
+--
+data MessageChoicePrescript = MessageChoicePrescript      -- Choice to Issue multiple medications
+  with
+    items : [LongMessageMedication]                    -- Activated after selecting [SOME]
+    dateOfIssue : Date
+  deriving (Eq, Show)  
+
+-- ShortMessageList Data Record Type
+--
+data ShortMessageList = ShortMessageList        -- Consulation medication list
+  with
+    prescriptionChoice : Optional MessageChoicePrescript
+    prescriptionNotes : Text                -- Medication notes
+  deriving (Eq, Show)
+
+-- PrescriptAuth Template
+--
+type PrescriptAuthId = ContractId PrescriptAuth 
+template PrescriptAuth
+  with
+    senderPrescriptAuth : Party -- issuer / Doctor
+    ownerPrescriptAuth : Party -- owner / Pharmacy, Patient
+    patientSummary : PatientSummary -- Citizen / Patient 
+    -- medScript : ShortMessageList  -- Form
+    patientMedications : ShortMessageList  -- Form
+  where
+    agreement
+      "This is an issuance of medications from a Treating Doctor while the Medical Centre"
+      <> "is operating under the Ministry of Health NZ guidelines for Primary Health"
+      <> "Care while COVID-19 restrictions apply. For the full disclosure of Patient"
+      <> "obligations please visit https://www.nhcmedcentre.co.nz."
+      <> "Your continued use of this service is tacit acceptance of these guidelines."
+    signatory senderPrescriptAuth
+    observer ownerPrescriptAuth
+    ensure
+       show senderPrescriptAuth == "'Doctor'" -- Only Doctor can issue
+
+    controller senderPrescriptAuth can -- senderPrescriptAuth
+      TransferMedications_Action : ContractId PrescriptAuth -- action
+        do
+          assertMsg "Recipient cannot be Issuing Doctor" (senderPrescriptAuth /= ownerPrescriptAuth)
+          create PrescriptAuth with
+            senderPrescriptAuth,
+              ownerPrescriptAuth,
+              patientSummary,
+              patientMedications
+
+      TransferMedications_Cancel : () do return () -- cancel
+
+-- Comment out below
+-- fix `medications.issuer`, now that Medications.daml
+-- is non-functional, and redundant.
+
+-------------------
+---- TODO LIST ----
+-------------------
+
+-- check for repeats <- 1                         [X]
+-- issue repeats <- 2                             [X]
+-- order new repeats <- 10                        [X]
+-- arrange new visit <- 11                        [X]
+-- create adverse reactions                       [X]
+--
+-- Patient contact: Doctor, Pharmacy or NZPhvC    [X]
+-- Need those parties in a pre-done list,
+-- so once the Patient notifies the adverse
+-- reaction, everyone gets notified               [X]
+
+{--
+  | Medications section.
+  |
+  | 5 parts:
+  |
+  | MedsIssue;
+  | IPMedsIssue;
+  | IPMedsTransfer;
+  | IPMedsRepeat;
+  | IPMedsReissue;
+--}
+
+{--
+-- MedsIssue Template
+--
+type MedsIssueId = ContractId MedsIssue
+template MedsIssue
+  with
+    medications : PrescriptAuth                   -- List of medications
+    newIssuer : Party                             -- Pharmacy
+  where                     
+    signatory newIssuer, medications.issuer
+    observer medications.oversight
+
+    controller newIssuer can                      -- newIssuer
+      AcceptIssue : PrescriptAuthId
+        do
+          create medications with issuer = newIssuer
+
+      DenyIssue : PrescriptAuthId
+        do
+          create medications
+
+-- IPMedsIssue Data Type & Template
+--
+type IPMedsIssueId = ContractId IPMedsIssue
+template IPMedsIssue
+  with 
+    medications : PrescriptAuth                   -- List of medications
+    medsOwner : Party                             -- Patient
+  where 
+    signatory medications.owner, medsOwner
+
+    controller medsOwner can                      -- medsOwner
+      
+      -- Accept medications as medsOwner
+      CA_AcceptIssue: ContractId PrescriptAuth 
+        do 
+          create medications with owner = medsOwner
+
+      -- Reject medications as medsOwner
+      CA_RejectIssue: ContractId PrescriptAuth
+        do 
+          create medications 
+
+-- IPMedsTransfer Data Type & Template
+--
+type IPMedsTransferId = ContractId IPMedsTransfer
+template IPMedsTransfer
+  with
+    medications : PrescriptAuth                     -- List of medications
+    medsOwnerAgent : Party                          -- Agent of Patient
+    reason : Text
+  where 
+    signatory medications.owner, medsOwnerAgent
+
+    controller medsOwnerAgent can                  -- medsOwnerAgent
+      
+      -- Accept medications on behalf of medsOwner
+      AcceptOwnership: ContractId PrescriptAuth
+        do 
+          create medications with owner = medsOwnerAgent
+
+      -- Reject medications on behalf of medsOwner        
+      RejectOwnership: ContractId PrescriptAuth
+        do
+          create medications 
+
+-- IPMedsRepeat Data Type & Template
+--
+type IPMedsRepeatId = ContractId IPMedsRepeat
+template IPMedsRepeat
+  with
+    currentMeds : PrescriptAuth                 -- List of medications
+    ownerMeds : Party                           -- Patient
+    agentMeds : Party                           -- Agent
+    observers : [Party]
+    checkDate : Date                            -- Date
+  where
+    signatory ownerMeds, agentMeds
+    observer observers                          -- Lurkers (medsSupplier, medsOversight)
+
+    -- Patient checks for repeats
+    nonconsuming choice OwnerCheckRepeat : PrescriptAuth
+      with
+        medsAgency : Party
+      controller ownerMeds                      -- ownerMeds
+      do return currentMeds
+
+    -- Agent checks for repeats
+    nonconsuming choice AgentCheckRepeat : PrescriptAuth
+      with
+        medsAgency : Party
+      controller agentMeds                      -- agentMeds
+      do return currentMeds  
+
+-- IPMedsReissue Data Type & Template
+--
+type IPMedsReissueId = ContractId IPMedsReissue
+template IPMedsReissue
+  with 
+    medications : PrescriptAuth             -- List of medications
+    medsOwner : Party                       -- Patient
+  where 
+    signatory medications.owner, medsOwner
+
+    controller medsOwner can                -- medsOwner
+      
+      -- Accept medications as medsOwner
+      CA_AcceptReissue: ContractId PrescriptAuth 
+        do 
+          create medications with owner = medsOwner
+
+      -- Reject medications as medsOwner
+      CA_RejectReissue: ContractId PrescriptAuth
+        do 
+          create medications
+--}
+
+-- EOF

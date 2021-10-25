@@ -1,0 +1,184 @@
+-- Copyright (c) 2021 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+
+module SupportingDocumentation where
+
+{--
+ | Welcome to the GetMedNZ Smart Contract application
+ | supporting documentation file.
+--}
+
+{--
+  | The following nonsensical Template is to prevent application
+  | failure on uploading this document to the Daml Hub console.
+  |
+  | Further details after the QuidAgis template:
+--}
+
+-- QuidAgis Type & Template
+--
+type QuidAgisId = ContractId QuidAgis
+template QuidAgis with
+    developer : Party                 -- QuidAgis
+    reviewers : [Party]               -- Digital Asset & SE2 key personnel
+    message : Text                    -- Concise
+  where
+    agreement
+      "This document is to support my submission to the Devpost "
+      <> "Daml Hackathon. This document is in the format of a .Daml "
+      <> "file so that it can be packaged with the Daml application "
+      <> "archive (Dar) and uploaded to the Daml Hub console for review "
+      <> "by the relevant sponsoring agency parties."
+      <> "..."
+      <> "The aim of this document is to highlight the relevant use case, "
+      <> "which is the inconsistent and unreliable management of legally, "
+      <> "prescribed medications, as part of an ongoing Primary Healthcare "
+      <> "management plan within the New Zealand Public Health system."
+      <> "..."
+    signatory developer
+    observer reviewers
+
+    key developer: Party
+    maintainer key
+
+    nonconsuming choice Review: QuidAgisId with
+        developerToReview: Party
+      controller developer
+      do
+        assertMsg "This submission is non-functional" (developerToReview /= developer)
+        assertMsg "You cannot review the same Developer twice" (notElem developerToReview reviewers)
+        archive self
+        create this with reviewers = developerToReview :: reviewers
+
+{--
+ | Welcome to the GetMedNZ Smart Contract application
+ | supporting documentation file.
+ |
+ | -- Introduction.
+ |
+ | The following information is made available, due to the absence of
+ | a functioning User Interface, and outlines the envisioned methods,
+ | frameworks and potential goals.
+ |
+ | -- What is the problem?
+ |
+ | People being prescribed legal medications in New Zealand, have a very
+ | wide degree of experiences. It all depends on their location in New 
+ | Zealand, which District Health Board they are in, which Pharmacy provider
+ | they use and how good the staff are.
+ |
+ | As a person who constantly engages with the New Zealand public health
+ | system, I am concerned with and occasionally shocked by the inconsistent
+ | service delivery in requesting and being issued legal medications.
+ |
+ | Sometimes, poor customer experience will be an inconvenience, other times
+ | it will have a more negative impact on the patient and their family, even
+ | to the point of requiring Emergency medical intervention.
+ |
+ | -- What is the problem space?
+ |
+ | The specific need for this application is the requesting of, and being
+ | issued legal medications, as part of an ongoing Primary Healthcare 
+ | management plan. The aim is to remove the opportunities for error, timing
+ | delays and systems incompatability, to maximise the patient user experience
+ | and quality of healthcare.
+ |
+ | -- What is the approach?
+ |
+ | The approach is the construction of a Smart Contract to allow a Patient or
+ | their Agent, to request previously issued medications, or to arrange a visit
+ | to the Primary Healthcare Provider. After the prescriptions have been
+ | authorised, they would be immediately available for issuing by any
+ | associated and duly authorised Pharmacy, subject to stock levels.
+ |
+ | The Smart Contract would allow all relevant parties to freely communicate
+ | with each other reliably, clearly and with full communications provenance.
+ --}
+
+{--
+ | -- GetMedNZ application components:
+ |
+ | Development Version 0.4.9
+ |
+ | -- Planned User Parties (Production):
+ | --
+ | UI Name:                   App Role:                 Type:
+ | Allison Mackenzie          prescribedCitizen         Signatory
+ | Paul Mackenzie             prescribedAgent           Signatory
+ | John Smith MBBS            prescribingDoctor         Signatory
+ | Northern Medcenter NZ      prescribingCentre         Observer
+ | Albany CentPharm Ltd       issuingPharmacy           Observer
+ | MedSafeNZ                  complianceOversight       Observer
+ | NZPhvC                     adverseReactions          Observer
+ | NZ Pharma Meds             pharmaceuticalSupplier    Observer
+ |
+ | -- Planned Business Process (Production):
+ | --
+ | * Customer contacts Provider, requests Meds
+ | * If Special Meds, Provider seeks Special Authority
+ | * Provider authorises Meds issue, unless Limit applies
+ | * Meds Supplier issues Meds, unless Limit applies
+ | * Customer or Agent collects Meds
+ | * After Meds are issued, Provider is advised
+ | * If Meds Repeat exist, Customer or Agent notified
+ | * If notified, Customer or Agent collect
+ | * If Meds Repeat not exist, Customer contacts Provider
+ | * After Customer consumes Meds, Provider is advised
+ | * Any party can advise Adverse Reactions
+ | * All parties can exchange communications
+ |
+ | -- Planned Key Party Templates (Production):
+ | --
+ | Patient Templates:         Doctor Templates:         Pharmacy Templates:
+ | --
+ | ContactDoctor              ContactPatient            ContactMedSafeNZ
+ | RequestMeds                ConductReview             ContactDoctor
+ | AdverseReactions           AuthoriseMeds             ContactMedcen
+ | ContractPharmacy           CancelMeds                IssueMeds
+ | RequestMoreMeds            ContactPharmacy           CancelMeds
+ | QueryMoreMeds              UpdateMeds                CancelMoreMeds
+ | RequestVisit               CancelMoreMeds            AdviseBadMeds
+ | CancelVisit                AdviseBadMeds             AdviseMedsClash
+ | ConfirmVisit               ConductVisit              ContactPatient
+ |
+ | NB: Some of the Templates above have been consolidated, withdrawn
+ | or removed due to time or logic constraints.
+ |
+ | -- Actual Key Party Templates (Development):
+ | --
+ | Patient Templates:         Doctor Templates:         Medcenter Templates:
+ | --
+ | AdverseReaction            CommenceConsult           RequestVisit
+ | -                          ContinueConsult           ConfirmedVisit
+ | -                          CompleteConsult           -
+ | -                          PrescriptAuth             -
+ | -                          MedsIssue                 -
+ | -                          IPMedsIssue               -
+ | -                          IPMedsTransfer            -
+ | -                          IPMedsRepeat              -
+ | -                          IPMedsReissue             -
+--}
+
+{--
+ | -- Conclusion.
+ |
+ | -- What are the next steps for this application?
+ |
+ | The plan is to include the following features; basic stock control based
+ | on the quantities of medications prescribed; stock adjustments when a 
+ | patient is issued or returns medications; a wider range of optional inputs
+ | for the contract; fixed inputs; the tracking of multiple patients, doctors
+ | and pharmacies in realtime and finally, a working User Interface.
+ |
+ | -- What about future extensions of this application?
+ |
+ | As this is a Healthcare related application, I believe that after relevant
+ | systems and operational analysis, that this tool could be introduced in the
+ | following industry sectors; Dental practices, Medical Centres, Pathology centres,
+ | Hospitals, Veterinary services and Primary Industries livestock Health Management.
+ |
+ | Further potential may be realised through the integration of this application
+ | and various Internet of Things technologies.
+--}
+
+-- EOF

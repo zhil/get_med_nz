@@ -1,0 +1,54 @@
+-- Copyright (c) 2020 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+
+module Patient where
+
+-- import Daml.Script()
+-- import DA.Time()
+-- import DA.Date (Month(Apr), date)
+
+{--
+  | Patient Contact section.
+  |
+  | 1 part:
+  |
+  | ContactMedicalCentre;
+--}
+
+{--
+ | -- Basis of cross application Contact service:
+ | --
+ | Needs limiting input, only select [Range] of Users
+ | Needs message verification to the sender
+ | Needs to be similar to trivial Social Media example
+--}
+
+-- ContactMedicalCentre Type & Template
+--
+type ContactMedicalCentreId = ContractId ContactMedicalCentre
+template ContactMedicalCentre
+  with
+    contactPatient : Party
+    contactMedcen : Party
+    contactDoctor : Party
+    message : Text
+
+  where
+    signatory contactPatient
+    observer contactMedcen, contactDoctor
+
+    controller contactPatient can
+      RequestVisit : ContactMedicalCentreId
+        with
+          msgRecipient : Party
+          msgDate : Date
+          msgTime : Time
+          msgLocation : Text
+          msgChaperone : Bool
+          msgSiteVisitors : Int
+          msgnotes : Text
+        do
+          create this with
+            contactMedcen = msgRecipient
+
+-- EOF

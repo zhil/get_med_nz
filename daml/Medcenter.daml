@@ -1,0 +1,133 @@
+-- Copyright (c) 2020 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+
+module Medcenter where
+
+-- import Daml.Script
+-- import DA.Time()
+-- import DA.Date (Month(Apr), date)
+
+{--
+  | Medcenter section.
+  |
+  | 4 parts:
+  |
+  | RequestVisitDetails;
+  | RequestVisit;
+  | ConfirmedVisitDetails;
+  | ConfirmedVisit;
+--}
+
+{--
+  | Had researched about inputting custom Data Records from one
+  | template into another template but was unable to confirm/deny.
+  | Would be very helpful to build a significant Data Record on a 
+  | Patient, and then use it all the way through the Module in the
+  | exact format. Probably possible. Enquiries pending.
+  |
+  | https://discuss.daml.com/t/linking-two-templates-together-with-custom-record-types/3352
+--}
+
+-- RequestVisitDetails Data Record Type
+--
+data RequestVisitDetails = RequestVisitDetails
+  with
+    requestPatientName : Party
+    requestPatientDob : Text
+    requestPatientMessage : Text
+    requestPatientAssistance : Bool
+    requestAssistanceType : Text
+    requestPatientChaperone : Bool
+    requestPatientDate : Date
+    requestPatientContactNumber : Text
+    requestMessageDate : Date
+  deriving (Eq, Show)
+
+-- RequestVisit Template
+--
+type RequestVisitId = ContractId RequestVisit
+template RequestVisit
+  with
+    messageSenderRequest : Party -- Patient
+    multipleObserversRequest : [Party] -- Medcenter, Doctor
+    messageContentRequest : RequestVisitDetails -- Form
+  where
+    agreement
+      "This is a Patient request to visit Treating Doctor while the Medical Centre "
+      <> "is operating under the Ministry of Health NZ guidelines for Primary Health "
+      <> "Care while COVID-19 restrictions apply. For the full disclosure of Patient "
+      <> "obligations please visit https://www.nhcmedcentre.co.nz."
+      <> " Your continued use of this service is tacit acceptance of these guidelines."
+    signatory messageSenderRequest
+    observer multipleObserversRequest
+
+    controller messageSenderRequest can -- messageSenderRequest
+      RequestVisit_Submit : ContractId RequestVisit -- action
+        do
+          create RequestVisit with
+            messageSenderRequest,
+              multipleObserversRequest,
+              messageContentRequest
+
+      RequestVisit_Accept : () do return () -- cancel
+
+    controller multipleObserversRequest can -- multipleObserversRequest
+      RequestVisit_Deny : () do return () -- cancel
+
+-- Placeholder section, U/S, but good form.
+--
+{--   RequestVisit_Confirm : ContractId ConfirmedVisit -- action
+        do
+          create ConfirmedVisit with
+            messageSenderConfirm = messageSenderRequest,
+              multipleObserversConfirm = multipleObserversRequest,
+              messageContentConfirm = messageContentRequest
+--}              
+
+-- ConfirmedVisitDetails Data Record Type
+--
+data ConfirmedVisitDetails = ConfirmedVisitDetails
+  with
+    confirmedPatientName : Party
+    confirmedPatientDob : Text
+    confirmedPatientMessage : Text
+    confirmedPatientAssistance : Bool
+    confirmedAssistanceType : Text
+    confirmedPatientChaperone : Bool
+    confirmedPatientDate : Date
+    confirmedPatientContactNumber : Text
+    confirmedMessageDate : Date
+  deriving (Eq, Show)
+
+-- ConfirmedVisitDetails Template
+--
+type ConfirmedVisitId = ContractId ConfirmedVisit
+template ConfirmedVisit
+  with
+    messageSenderConfirm : Party -- Patient
+    multipleObserversConfirm : [Party] -- Medcenter, Doctor
+    messageContentConfirm : Text -- Form
+  where
+    agreement
+      "This is a confirmed request to visit a Treating Doctor while the Medical Centre"
+      <> "is operating under the Ministry of Health NZ guidelines for Primary Health"
+      <> "Care while COVID-19 restrictions apply. For the full disclosure of Patient"
+      <> "obligations please visit https://www.nhcmedcentre.co.nz."
+      <> "Your continued use of this service is tacit acceptance of these guidelines."
+    signatory messageSenderConfirm
+    observer multipleObserversConfirm
+
+    controller messageSenderConfirm can -- messageSenderConfirm
+      ConfirmedVisit_Accept : ContractId ConfirmedVisit -- accept
+        do
+          create ConfirmedVisit with
+            messageSenderConfirm,
+              multipleObserversConfirm,
+              messageContentConfirm
+
+      ConfirmedVisit_Reject : () do return () -- reject
+
+    controller multipleObserversConfirm can -- multipleObserversConfirm
+      ConfirmedVisit_Cancel : () do return () -- cancel
+
+-- EOF

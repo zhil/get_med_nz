@@ -1,0 +1,37 @@
+sdk-version: 1.17.1
+name: getmednz
+version: 0.5.0
+source: daml
+parties:
+  - Doctor # GP
+  - Medcenter # Employer of GP
+  - Patient # Patient of Medcenter
+  - Pharmacy # Allied service provider
+  - ADHB # Auckland District Health Board (1/20 nationwide)
+  - MedSafeNZ # A government approval & safety entity
+  - NZPhvC # A research agency tracking adverse reactions
+dependencies:
+- daml-prim
+- daml-stdlib
+- daml-trigger
+sandbox-options:
+- --wall-clock-time
+
+# Entropy issue on HP Laptop
+# Use Canton Ledger for App project
+#
+- --contract-id-seeding=testing-weak
+
+# Comment out due to non-viable UI
+#
+# - --ledgerid=getmednz-sandbox
+# start-navigator: false
+
+# Comment out due to non-viable UI
+#
+# codegen:
+#   js:
+#     output-directory: ui/daml.js
+#     npm-scope: daml.js
+
+# EOF
